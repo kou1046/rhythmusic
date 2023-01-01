@@ -2,11 +2,12 @@ import axios from "axios";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { parseCookies, setCookie,  } from "nookies";
 import { SpotifyAuthApiResponse } from "./auth";
-import { SpotifyMeApiResponse } from "../../types/spotifyapi";
+import { SpotifyMeAPIResponse } from "../../lib/types/spotifyapi";
+import { spotifyAPI } from "../../lib/utils";
 
 export type ResponseType = {
-    accessToken?: string
-    userData?: SpotifyMeApiResponse
+    accessToken?: string,
+    me?: SpotifyMeAPIResponse
     message?: string
 }
 
@@ -17,11 +18,12 @@ const checkLogin: NextApiHandler<ResponseType> = async (req: NextApiRequest, res
         const userObj = JSON.parse(user) as SpotifyAuthApiResponse;
         const accessToken = userObj.access_token;
         const refreshToken = userObj.refresh_token;
+        let api = new spotifyAPI(accessToken);
+        let me: SpotifyMeAPIResponse | undefined = undefined;
 
         try {
-            await axios.get<SpotifyMeApiResponse>("https://api.spotify.com/v1/me", {
-                "headers": { "Authorization": `Bearer ${accessToken}`}
-            })
+            const meRes = await api.fetcher.get<SpotifyMeAPIResponse>("/me");
+            me = meRes.data;
         } 
         catch { // token期限切れ
             if (refreshToken) { 
@@ -39,17 +41,19 @@ const checkLogin: NextApiHandler<ResponseType> = async (req: NextApiRequest, res
                     }
                 )
 
+                api = new spotifyAPI(response.data.access_token);
+                const meRes = await api.fetcher.get<SpotifyMeAPIResponse>("/me");
+                me = meRes.data;
                 setCookie({ res }, "user", JSON.stringify(response.data));
-                res.status(200).json({ accessToken: response.data.access_token});
+                res.status(200).json({ accessToken: response.data.access_token, me });
             }
             else {
                 res.status(401); 
                 res.json({message: "unauthorized"});
             };
 
-
         }
-        res.status(200).json({ accessToken });
+        res.status(200).json({ accessToken, me });
     } else {
         res.status(200).json({ message: "Not login"});
     } 

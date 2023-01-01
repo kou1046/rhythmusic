@@ -1,7 +1,7 @@
 import { Box } from "@mui/material"
 import axios from "axios"
 import { KeyedMutator } from "swr/_internal"
-import { ResponseType } from "../api/checkLogin"
+import { ResponseType } from "../../pages/api/checkLogin"
 
 type PropsType = {
     loginMutate: KeyedMutator<ResponseType>

@@ -30,8 +30,8 @@ const authorize: NextApiHandler = async (req: NextApiRequest, res: NextApiRespon
   );
 
   setCookie({ res }, "user", JSON.stringify(response.data))
-  res.status(200).redirect("/")
+  res.status(200).redirect(`${process.env.HOST_NAME}`)
   
 };
-
+ 
 export default authorize
