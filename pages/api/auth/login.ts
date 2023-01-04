@@ -1,9 +1,9 @@
 import axios from "axios";
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { parseCookies, setCookie,  } from "nookies";
-import { SpotifyAuthApiResponse } from "./auth";
-import { SpotifyMeAPIResponse } from "../../lib/types/spotifyapi";
-import { spotifyAPI } from "../../lib/utils";
+import { SpotifyAuthApiResponse } from "./authorization";
+import { SpotifyMeAPIResponse } from "../../../lib/types/spotifyapi";
+import { spotifyAPI } from "../../../lib/utils";
 
 export type ResponseType = {
     accessToken?: string,
@@ -11,7 +11,7 @@ export type ResponseType = {
     message?: string
 }
 
-const checkLogin: NextApiHandler<ResponseType> = async (req: NextApiRequest, res: NextApiResponse) => {
+const login: NextApiHandler<ResponseType> = async (req: NextApiRequest, res: NextApiResponse) => {
     const { user } = parseCookies(res);
 
     if (user) {
@@ -20,7 +20,6 @@ const checkLogin: NextApiHandler<ResponseType> = async (req: NextApiRequest, res
         const refreshToken = userObj.refresh_token;
         let api = new spotifyAPI(accessToken);
         let me: SpotifyMeAPIResponse | undefined = undefined;
-
         try {
             const meRes = await api.fetcher.get<SpotifyMeAPIResponse>("/me");
             me = meRes.data;
@@ -36,15 +35,18 @@ const checkLogin: NextApiHandler<ResponseType> = async (req: NextApiRequest, res
                     {
                         headers: {
                             "Content-Type": "application/x-www-form-urlencoded", 
-                            "Authorization": `Basic ${Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`, 'utf-8')}`
+                            "Authorization": `Basic ${Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`, 'utf-8').toString("base64")}`
                         }
                     }
                 )
-
+                
                 api = new spotifyAPI(response.data.access_token);
                 const meRes = await api.fetcher.get<SpotifyMeAPIResponse>("/me");
                 me = meRes.data;
-                setCookie({ res }, "user", JSON.stringify(response.data));
+                setCookie({ res }, "user", JSON.stringify(response.data), {
+                    httpOnly: true, 
+                    path: "/"
+                });
                 res.status(200).json({ accessToken: response.data.access_token, me });
             }
             else {
@@ -59,4 +61,4 @@ const checkLogin: NextApiHandler<ResponseType> = async (req: NextApiRequest, res
     } 
 }
 
-export default checkLogin
+export default login

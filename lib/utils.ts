@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { TrackWithFeature } from "./types/spotifyapi";
 
 export class spotifyAPI {
     fetcher: AxiosInstance
@@ -11,6 +12,15 @@ export class spotifyAPI {
             }
         })
     }
+}
+
+export const splitArray = <T>(array: Array<T>, elementLength: number): Array<Array<T>> => {
+    const length = Math.ceil(array.length / elementLength);
+    return Array.from( { length } , (_, i) => array.slice(i * elementLength, (i + 1) * elementLength))
+}
+
+export const selectTracksByBpm = (tracks: Array<TrackWithFeature>, bpm: number, interval: number = 5): Array<TrackWithFeature> => {
+    return tracks.filter(track => track.tempo <= bpm + interval && track.tempo >= bpm - interval)
 }
 
 export const dft = (data: Array<number>) => {

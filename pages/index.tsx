@@ -1,18 +1,24 @@
+import { useRef, useState, useEffect } from 'react';
 import { GetStaticProps } from 'next'
+import axios from 'axios';
 import { Box } from '@mui/system';
-import { Grid } from '@mui/material';
+import Fab from '@mui/material/Fab';
+import Typography from '@mui/material/Typography';
+import { CircularProgress, Grid } from '@mui/material';
 import Chart from "chart.js/auto"
-import { Line } from "react-chartjs-2"
 import StreamingPlugin from 'chartjs-plugin-streaming';
 import "chartjs-adapter-moment"
-import { ja } from 'date-fns/locale';
-import { LoginButton } from '../lib/components/LoginButton';
-import { LogoutButton } from '../lib/components/LogoutButton';
-import { useLogin } from '../lib/hooks/useLogin';
-import { useAcceleration } from '../lib/hooks/useAcceleration';
-import axios from 'axios';
-import { spotifyAPI } from '../lib/utils';
-
+import { useUserVerification } from '../lib/hooks/useUserVerification';
+import { useMeasurementBpmWithSensor } from '../lib/hooks/useMeasurementBpmWithSensor';
+import { LoginButton } from '../lib/components/auth/LoginButton';
+import { LogoutButton } from '../lib/components/auth/LogoutButton';
+import { AudioAmplitudeChart } from '../lib/components/chart/AudioAmplitudeChart';
+import { AccelerationChart } from '../lib/components/chart/AccelerationChart';
+import { SpotifyArtistAPIResponse, TrackWithFeature } from '../lib/types/spotifyapi';
+import { ArtistCards } from '../lib/components/media/ArtistCards';
+import TrackCard from '../lib/components/media/TrackCard';
+import { selectTracksByBpm } from '../lib/utils';
+               
 Chart.register(StreamingPlugin) ;
 
 export const getStaticProps: GetStaticProps<pageProps> = async () => {
@@ -31,88 +37,88 @@ type pageProps = {
 
 export default function Home(pageprops: pageProps) {
 
-  const { data: loginData, error: loginError, isValidating, mutate: loginMutate } = useLogin();
-  const { accs, status, renderRequestButton } = useAcceleration();
-
-  const renderChart = () => {
-
-    const data = {
-      datasets: [{
-        label: "acceleration", 
-        data: [],
-        pointRadius: 0,
-        borderColor: "black",
-        borderWidth: 1.5
-      }]
-    }
-
-    const options: any = {
-      maintainAspectRation: false,
-      plugins: {
-        legend: {
-          display: false
-        }
-      },
-      scales: {
-        x: {
-          type: "realtime",
-          adapters: {
-            date: {
-              locale: ja
-            }
-          },
-          realtime: {
-            duration: 10000,
-            refresh: 20,
-            onRefresh: ({ data } : Chart<"line">) => {
-              data.datasets.forEach(dataset => {
-                dataset.data.push({x: Date.now(), y: accs?.z!})
-              })
-            }
-          }, 
-          ticks: {
-            display: false,
-          }
-        },
-        y: {
-          min: -5,
-          max: 5,
-          title: {
-            display: true,
-            text: "Acceleration [m/s^2]",
-            color: "black",
-          }, 
-          ticks: {
-            color: "black"
-          }
-        },
-        
-      }
-    }
-    console.log(loginData);
-        return <>
-        <Box sx={{maxWidth: 780}} >
-          <Line data={data} options={options}/>
-        </Box>
-        </>
+  const chartRef = useRef<Chart<"line">>(null);
+  const { bpms, setBpms, measureBpm } = useMeasurementBpmWithSensor(chartRef);
+  const { data: loginData, error: loginError, mutate: loginMutate } = useUserVerification();
+  const [ artists, setArtists ] = useState<Array<SpotifyArtistAPIResponse>>([]);
+  const [ artistTracks, setArtistTracks ] = useState<Array<Array<TrackWithFeature>>>([]);
+  const size = {
+    minWidth: 300, 
+    maxWidth: 800
   }
 
+  useEffect(() => {
+    if (!loginData?.me) {
+      setArtists([]);
+      return
+    }
+    const fetchArtists = async () => {
+      const res = await axios.get<Array<SpotifyArtistAPIResponse>>("/api/artists/user-top");
+      setArtists(res.data);
+    };
+    fetchArtists();
+  }, [loginData])
 
+  useEffect(() => {
+    if (bpms.length != 5) return 
+      const fetchTracks = async () => {
+        const res = await axios.get<Array<Array<TrackWithFeature>>>(
+          `/api/artists/${artists.map(({ id }) => id).join(",")}/tracks`
+          );
+        console.log(res.data);
+        setArtistTracks(res.data);
+      } 
+      fetchTracks();
+  }, [bpms])
 
   return (
-    <>
-      <Grid container justifyContent="center" alignContent="center">
+    <Box sx={{minHeight: "100vh"}}>
+      <Grid container direction={"column"} alignItems="center" spacing={3}>
         <Grid item>
-          {loginData?.accessToken ? <LogoutButton loginMutate={ loginMutate }/>: <LoginButton { ...pageprops }></LoginButton>}
+          <Box sx={{display: "flex", flexDirection: "column"}}>
+            <Typography>{loginData?.accessToken ? `Logging in with ${loginData.me?.display_name}`: null}</Typography>
+            {loginData?.me ? <LogoutButton loginMutate={ loginMutate }/>: <LoginButton { ...pageprops }></LoginButton>}
+          </Box>
         </Grid>
-        <Grid item xs={12}>
-          {status === "default" ? renderRequestButton() : renderChart()}
-        </Grid>
-      </Grid>
-      <button onClick={ async () => {
-        const res = await axios.get("/api/topartisttracks");
-        console.log(res.data);
-      }}>test</button>
-    </>
+        { loginData?.me ? 
+          <Grid item>
+          { artists.length ? 
+            <Box sx={{border: "dashed 1.5px", p: 2}}>
+              <ArtistCards artists={artists} />
+              <Box sx={{textAlign: "center"}}>
+                <Typography>Selected artists</Typography>
+              </Box>
+            </Box>
+            :
+            <CircularProgress />
+          }
+          </Grid>
+          :
+          null
+        }
+        <Grid item>
+          {loginData?.me ? 
+          <Box sx={{...size, textAlign: "center", boxShadow: "0 0 8px gray", borderRadius: 3, p: 3}}>
+            <Typography sx={{fontWeight: "bold"}}>BPM: {bpms.length ? bpms.reduce((prev, cur) => (prev + cur)) / bpms.length : 0}</Typography>
+            <AudioAmplitudeChart chartRef={chartRef} threshold={200}/>
+          </Box> 
+          : null
+         }
+         </Grid>
+         <Grid item>
+          {artistTracks.length ? 
+            selectTracksByBpm(artistTracks[5], bpms.reduce((prev, cur) => prev + cur) / bpms.length)
+            .map(track => <TrackCard track={track} artist={artists[5]} key={track.name} />)
+           :
+            null
+          }
+         </Grid>
+    </Grid>
+      <Box sx={{position: "sticky", bottom: 0, display: "flex", flexDirection: "row-reverse"}}>
+        <Fab></Fab>
+        <Fab></Fab>
+        <Fab></Fab>
+      </Box>
+    </Box>
   )
 }

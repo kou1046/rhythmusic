@@ -6,6 +6,7 @@ type PropsType = {
     redirectUri: string
 }
 
+// eslint-disable-next-line react/display-name
 export const LoginButton = memo(({ clientID, redirectUri }: PropsType) => {
 
     const login = () => {

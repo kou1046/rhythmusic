@@ -3,7 +3,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { destroyCookie, parseCookies } from "nookies";
 
 const logout = (req: NextApiRequest, res: NextApiResponse) => {
-    destroyCookie({ res }, "user");
+    destroyCookie({ res }, "user", {
+        path: "/"
+    });
     res.status(200).redirect("/");
 }
 

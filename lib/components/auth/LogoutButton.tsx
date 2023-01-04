@@ -1,7 +1,7 @@
 import { Box } from "@mui/material"
 import axios from "axios"
 import { KeyedMutator } from "swr/_internal"
-import { ResponseType } from "../../pages/api/checkLogin"
+import { ResponseType } from "../../../pages/api/auth/login"
 
 type PropsType = {
     loginMutate: KeyedMutator<ResponseType>
@@ -10,7 +10,7 @@ type PropsType = {
 export const LogoutButton = ({ loginMutate }: PropsType) => {
 
     const logout = async () => {
-        const res = await axios.get("/api/logout"); 
+        const res = await axios.get("/api/auth/logout"); 
         loginMutate();
     }
 

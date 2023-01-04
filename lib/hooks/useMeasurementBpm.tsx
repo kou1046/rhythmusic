@@ -29,5 +29,5 @@ export const useMeasurementBpm = (autoReset: boolean = true) => {
        setPushCount(prev => prev+1);
     }, [pushCount])
 
-    return { bpms, measureBpm }
+    return { bpms, setBpms, measureBpm }
 }

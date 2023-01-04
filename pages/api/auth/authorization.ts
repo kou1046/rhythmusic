@@ -10,7 +10,7 @@ export type SpotifyAuthApiResponse = {
   refresh_token: string
 }
 
-const authorize: NextApiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
+const authorization: NextApiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { code, state } = req.query;
 
   const params = new URLSearchParams();
@@ -29,9 +29,11 @@ const authorize: NextApiHandler = async (req: NextApiRequest, res: NextApiRespon
       }
   );
 
-  setCookie({ res }, "user", JSON.stringify(response.data))
+  setCookie({ res }, "user", JSON.stringify(response.data), {
+    path: "/",
+    httpOnly: true
+  })
   res.status(200).redirect(`${process.env.HOST_NAME}`)
-  
 };
  
-export default authorize
+export default authorization
