@@ -1,23 +1,23 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, RefObject, useState } from "react";
 import Chart from "chart.js/auto";
 import { useMeasurementBpm } from "./useMeasurementBpm";
 import { useInterval } from "./useInterval";
-import { RefObject } from "react";
 
-export const useMeasurementBpmWithSensor = ( chartRef: RefObject<Chart<"line">> ) => {
+const useMeasurementBpmWithChart = () => {
 
     const { bpms, setBpms, measureBpm } = useMeasurementBpm();
     const startOverTime = useRef<number>(0);
+    const [ chart, setChart ] = useState<Chart<"line"> | null>(null);
 
     useInterval(() => {
-        if (!chartRef.current) return ;
+        if (!chart) return ;
 
-        const values = chartRef.current.data.datasets[0].data as Array<{x: number, y: number} | undefined>;
+        const values = chart.data.datasets[0].data as Array<{x: number, y: number} | undefined>;
         const recentValue = values[values.length - 1];
         
         if (!recentValue) return;
 
-        const threshold = chartRef.current.data.datasets[1].data;
+        const threshold = chart.data.datasets[1].data;
         const recentThreshold = (threshold[threshold.length - 1]! as {x: number, y:number}).y;
 
         if ( recentValue.y > recentThreshold ) {
@@ -30,5 +30,7 @@ export const useMeasurementBpmWithSensor = ( chartRef: RefObject<Chart<"line">> 
         }
     }, 20)
 
-    return { bpms, setBpms, measureBpm }
+    return { bpms, setBpms, setChart, measureBpm }
 }
+
+export default useMeasurementBpmWithChart

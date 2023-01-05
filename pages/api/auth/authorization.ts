@@ -1,14 +1,7 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next'
 import axios from 'axios';
-import { setCookie, parseCookies, destroyCookie} from 'nookies';
-
-export type SpotifyAuthApiResponse = {
-  access_token: string,
-  token_type: string,
-  scope: string,
-  expires_in: number,
-  refresh_token: string
-}
+import { setCookie } from 'nookies';
+import { SpotifyAuthApiResponse } from '../../../lib/types/spotifyapi';
 
 const authorization: NextApiHandler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { code, state } = req.query;
@@ -33,7 +26,7 @@ const authorization: NextApiHandler = async (req: NextApiRequest, res: NextApiRe
     path: "/",
     httpOnly: true
   })
-  res.status(200).redirect(`${process.env.HOST_NAME}`)
+  res.redirect(`${process.env.HOST_NAME}/app`);
 };
  
 export default authorization

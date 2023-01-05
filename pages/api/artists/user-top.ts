@@ -9,7 +9,7 @@ const userTop: NextApiHandler<Array<SpotifyArtistAPIResponse>> = async (req: Nex
     const api = new spotifyAPI(accessToken);
     const artistRes = await api.fetcher<SpotifyPluralResponse<SpotifyArtistAPIResponse>>("/me/top/artists", {
         params: {
-            limit: 20
+            limit: 5
         }
     });
     res.status(200).json(artistRes.data.items)

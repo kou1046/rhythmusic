@@ -20,7 +20,11 @@ export const splitArray = <T>(array: Array<T>, elementLength: number): Array<Arr
 }
 
 export const selectTracksByBpm = (tracks: Array<TrackWithFeature>, bpm: number, interval: number = 5): Array<TrackWithFeature> => {
-    return tracks.filter(track => track.tempo <= bpm + interval && track.tempo >= bpm - interval)
+    const selectedTracks = tracks.filter(track => track.tempo <= bpm + interval && track.tempo >= bpm - interval);
+    const idxesSortedBySquaredError = selectedTracks.map((track, i) => ({diff: Math.pow(bpm - track.tempo, 2), index: i}))
+                                                    .sort((a, b) => (a.diff > b.diff) ? 1 : -1)
+
+    return idxesSortedBySquaredError.map(({ index }) => selectedTracks[index])
 }
 
 export const dft = (data: Array<number>) => {

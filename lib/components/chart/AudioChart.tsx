@@ -1,26 +1,25 @@
-import { memo, RefObject } from "react";
+import { RefObject, memo } from "react"
 import Chart from "chart.js/auto"
-import { Line } from "react-chartjs-2";
 import StreamingPlugin from 'chartjs-plugin-streaming';
 import Annotation from "chartjs-plugin-annotation";
+import { Line } from "react-chartjs-2";
 import "chartjs-adapter-moment"
-import { Acceleration } from "../../hooks/useAcceleration";
 
 Chart.register(StreamingPlugin, Annotation);
 
 type PropsType = {
-    chartRef?: RefObject<Chart<"line">>, 
+    analyser: AnalyserNode | null,
     threshold?: number,
-    accs: Acceleration | null,
+    chartRef?: RefObject<Chart<"line">>
 }
 
-const AccelerationChart = memo(({ accs, chartRef, threshold = 3}: PropsType) => {
+const AudioChart = ({ analyser, threshold = 180, chartRef}: PropsType) => {
 
-    if (!accs) return <></>
+    if (!analyser) return <></>
 
     const data = {
         datasets: [{
-            label: "acceleration", 
+            label: "amplitude", 
             data: [], 
             borderColor: "black", 
             pointRadius: 0,
@@ -72,8 +71,9 @@ const AccelerationChart = memo(({ accs, chartRef, threshold = 3}: PropsType) => 
                     duration: 2000,
                     refresh: 20,
                     onRefresh: (chart : Chart<"line">) => {
-                        const { x, y, z } = accs;
-                        const max = Math.max(x!, y!, z!);
+                        const fftData = new Uint8Array(analyser.fftSize);
+                        analyser.getByteTimeDomainData(fftData);
+                        const max = fftData.reduce((prev, cur) => Math.max(prev, cur));
                         chart.data.datasets[0].data.push({x: Date.now(), y: max});
                         chart.data.datasets[1].data.push({x: Date.now(), y: threshold});
                     }
@@ -83,14 +83,15 @@ const AccelerationChart = memo(({ accs, chartRef, threshold = 3}: PropsType) => 
                 max: 1.5 * threshold,
                 ticks: {
                     display: false
-                }, 
+                },
                 grid: {
                     display: false
                 }
             }
         }
     }
-    return <Line data={data} options={options} ref={chartRef} />
-})
 
-export default AccelerationChart
+    return <Line data={data} options={options} ref={chartRef} />
+}
+
+export default memo(AudioChart)

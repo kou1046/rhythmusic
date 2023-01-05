@@ -14,7 +14,7 @@ export default function App({ Component, pageProps }: AppProps) {
                                     p: 1,
                                     fontSize: 24
                                     }}>
-      <Typography variant={"h5"} sx={{fontWeight: "bold"}}>Walk music</Typography>
+      <Typography variant={"h5"} sx={{fontWeight: "bold", fontSize: 20}}>RHYTHMUSIC</Typography>
       <Link href={"https://github.com/kou1046/walk-music"}><GitHubIcon /></Link>
     </Box>     
     <Component {...pageProps} />

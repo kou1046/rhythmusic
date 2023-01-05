@@ -1,4 +1,5 @@
 import { Box } from "@mui/material"
+import { Typography } from "@mui/material"
 import { memo } from "react"
 
 type PropsType = {
@@ -7,7 +8,7 @@ type PropsType = {
 }
 
 // eslint-disable-next-line react/display-name
-export const LoginButton = memo(({ clientID, redirectUri }: PropsType) => {
+const LoginButton = memo(({ clientID, redirectUri }: PropsType) => {
 
     const login = () => {
         const scopes = ["app-remote-control", "user-follow-modify", "user-follow-read", "user-read-playback-state", 
@@ -26,14 +27,21 @@ export const LoginButton = memo(({ clientID, redirectUri }: PropsType) => {
         <Box 
          component="button" 
          sx={{p: 2,
+              border: "solid 2px white",
               borderRadius: 10,
-              bgcolor: "white", 
               boxShadow: 5, 
               fontSize: 15, 
-              fontWeight: "bold"
+              fontWeight: "bold",
+              bgcolor: "#1db954",
+              cursor: "pointer",
+              ":hover": {
+                opacity: 0.7
+              }
              }}
          onClick={login}>
-        Sign in with Spotify
+        <Typography sx={{color: "black", fontWeight: "bold"}}>Sign in with Spotify</Typography>
         </Box>
     </>
 })
+
+export default LoginButton

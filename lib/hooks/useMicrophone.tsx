@@ -1,12 +1,9 @@
 import { Button } from "@mui/material"
 import { useState } from "react";
-import MicIcon from '@mui/icons-material/Mic';
-import MicOffIcon from '@mui/icons-material/MicOff';
-import TouchAppIcon from '@mui/icons-material/TouchApp';
 
-export const useMicrophone = () => {
+const useMicrophone = () => {
 
-    const [analyser, setAnalyser] = useState<AnalyserNode>();
+    const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
     const [isGranted, setIsGranted] = useState<boolean>();
 
     const requestPermission = async () => {
@@ -27,15 +24,11 @@ export const useMicrophone = () => {
             setIsGranted(true);
         }
         else {
-            setAnalyser(undefined);
+            setAnalyser(null);
         }
     }
 
-    const renderRequestButton = () => {
-        return <Button onClick={requestPermission} variant="contained" color="error">
-                {analyser ? <MicOffIcon />: <MicIcon />}
-               </Button>
-    }
-
-    return { analyser, renderRequestButton, isGranted}
+    return { analyser, requestPermission, isGranted}
 }
+
+export default useMicrophone

@@ -9,6 +9,14 @@ export type SpotifyMeAPIResponse = {
     uri: string
 }
 
+export type SpotifyAuthApiResponse = {
+    access_token: string,
+    token_type: string,
+    scope: string,
+    expires_in: number,
+    refresh_token: string
+  }
+
 export type SpotifyAlbumAPIResponse = {
     album_type: string, 
     total_tracks: number, 
@@ -24,7 +32,7 @@ export type SpotifyAlbumAPIResponse = {
     type: string, 
     uri: string, 
     artists: Array<SpotifyArtistAPIResponse>
-    tracks: Array<SpotifyPluralResponse<SpotifyTrackAPIResponse>>
+    tracks: SpotifyPluralResponse<SpotifyTrackAPIResponse>
 }
 
 type Followers = {
@@ -95,11 +103,14 @@ export interface SpotifyTrackAPIResponse {
     type: string;
     uri: string;
     is_local: boolean;
-    images: Images;
     name: string;
     release_date: string;
     release_date_precision: string;
     restriction: Restriction;
+}
+
+export interface MyTrack extends SpotifyTrackAPIResponse {
+    albumImages: Images
 }
 
 export interface AudioFeature {
@@ -123,4 +134,4 @@ export interface AudioFeature {
     valence: number;
 }
 
-export type TrackWithFeature = SpotifyTrackAPIResponse & AudioFeature;
+export type TrackWithFeature = MyTrack & AudioFeature;

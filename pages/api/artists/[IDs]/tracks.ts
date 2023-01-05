@@ -2,7 +2,7 @@ import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { parseCookies } from "nookies";
 import { splitArray, spotifyAPI } from "../../../../lib/utils";
 import { AudioFeature, SpotifyAlbumAPIResponse, SpotifyPluralResponse, 
-         SpotifyTrackAPIResponse, TrackWithFeature } from "../../../../lib/types/spotifyapi";
+         SpotifyTrackAPIResponse, TrackWithFeature, MyTrack} from "../../../../lib/types/spotifyapi";
 
 const tracks: NextApiHandler<Array<Array<TrackWithFeature>>> = async (req: NextApiRequest, res: NextApiResponse) => {
 
@@ -25,8 +25,12 @@ const tracks: NextApiHandler<Array<Array<TrackWithFeature>>> = async (req: NextA
         const albumDetails = await api.fetcher.get<{ albums: Array<SpotifyAlbumAPIResponse> }>(
             `/albums/?ids=${albums.map((({ id }) => id)).join(",")}`
             )
-        return albumDetails.data.albums.map(album => album.tracks).flat()
-                                       .map(ts => ts.items).flat()
+        return albumDetails.data.albums.map(album => {
+            album.tracks.items.forEach((track: any) => {
+                track.albumImages = album.images;
+            })
+            return album
+        }).flat().map(album => album.tracks.items).flat();
     }))
 
     const splitArtistTracks = artistTracks.map(el => splitArray(el, 100)); //特徴量の取得に100曲ずつしかリクエストを送れないため，分割する必要がある
@@ -39,18 +43,20 @@ const tracks: NextApiHandler<Array<Array<TrackWithFeature>>> = async (req: NextA
         return trackFeatures
     }))
 
-    res.status(200).json(splitArtistTracks.map((_, i) => {
+    const ArtistTracksWithFeature = splitArtistTracks.map((_, i) => {
         const splitTracks = splitArtistTracks[i];
         const splitFeatures = splitArtistTrackFeatures[i];
         return splitTracks.map((_, j) => {
             const tracks = splitTracks[j];
             const features = splitFeatures[j];
             return tracks.map((_, k) => {
-                const trackWithFeature: TrackWithFeature = {...tracks[k], ...features.audio_features[k]}
+                const trackWithFeature = {...tracks[k], ...features.audio_features[k]}
                 return trackWithFeature
             })
         }).flat()
-    }));
+    })
+
+    res.status(200).json(ArtistTracksWithFeature);
 }
 
 export default tracks

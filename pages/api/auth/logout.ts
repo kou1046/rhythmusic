@@ -1,12 +1,11 @@
-import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import { destroyCookie, parseCookies } from "nookies";
-
-const logout = (req: NextApiRequest, res: NextApiResponse) => {
+import { destroyCookie, parseCookies} from "nookies";
+ 
+const logout = async (req: NextApiRequest, res: NextApiResponse) => {
     destroyCookie({ res }, "user", {
         path: "/"
     });
-    res.status(200).redirect("/");
+    res.redirect(`${process.env.HOST_NAME}`);
 }
 
 export default logout
