@@ -22,7 +22,6 @@ const VerticalArtistMenu = ({ artists }: PropsType) => {
 
     return <>
         <Box sx={{
-                  borderLeft: "solid 1px whitesmoke",
                   height: "100vh", 
                   overflow: "auto",
                   }}>
@@ -31,7 +30,7 @@ const VerticalArtistMenu = ({ artists }: PropsType) => {
                                                                  flexDirection: "column",
                                                                  alignItems: "center", 
                                                                  mb: 1,
-                                                                 borderBottom: "solid 1px gray"
+                                                                 borderBottom: "solid 1px lightgray"
                                                                  }}>
                                         <ArtistIcon  artist={artist}/>
                                      </Box>) }

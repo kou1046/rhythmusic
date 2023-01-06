@@ -31,6 +31,8 @@ export default function App ({ loginData }: PageProps) {
 
     const [ artists, setArtists ] = useState<Array<SpotifyArtistAPIResponse>>([]);
     const [ artistTracks, setArtistTracks ] = useState<Array<Array<TrackWithFeature>>>([]);
+    const [ deviceID, setDeviceID ] = useState<string>();
+    const playerRef = useRef<Spotify.Player>();
     const { analyser, requestPermission: microphoneRequest } = useMicrophone();
     const { accs, requestPermission: motionRequest } = useAcceleration();
     const audioChartRef = useRef<Chart<"line">>(null);
@@ -49,7 +51,7 @@ export default function App ({ loginData }: PageProps) {
         if (!selectedTracks.length) return <Typography sx={{color: "lightgray"}}>No song found ...</Typography>
 
         return <>
-            {selectedTracks.map((track, i) => <TrackCard key={`${track.id}-${i}`} track={track}></TrackCard>)}
+            {selectedTracks.map((track, i) => <TrackCard key={`${track.id}-${i}`} track={track} deviceID={deviceID}></TrackCard>)}
         </>
     }
 
@@ -72,10 +74,34 @@ export default function App ({ loginData }: PageProps) {
         setChart(accsChartRef.current || audioChartRef.current);
     }, [analyser, accs])
 
+    useEffect(() => {
+        if (loginData.me) {
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                const player = new Spotify.Player({
+                    name: "rhythmusic", 
+                    getOAuthToken: async (cb) => {
+                        cb(loginData.accessToken!)
+                    },
+                    volume: 0.5
+                })
+                player.addListener("ready", ({ device_id }) => {
+                    setDeviceID(device_id);
+                });
+                player.connect();
+                playerRef.current = player;
+            }
+            if (!window.Spotify) {
+                const scriptTag = document.createElement('script');
+                scriptTag.src = 'https://sdk.scdn.co/spotify-player.js';
+                document.head!.appendChild(scriptTag);
+            }
+        }
+    }, [])
+
     return <>
     <Grid container justifyContent={"center"}>
         <Grid item xs={10} sx={{height: "100vh", overflow: "auto", p: 1, pt: 0, border: "solid whitesmoke 1px", position: "relative"}}>
-            <Typography sx={{fontWeight: "bold", position: "sticky", top: 0, bgcolor: "white"}}>Tracks</Typography>
+            <Typography sx={{fontWeight: "bold", position: "sticky", top: 0, bgcolor: "white", zIndex: 1}}>Tracks</Typography>
             {renderTrackCards()}    
         </Grid>
         <Grid item xs={2}>
@@ -164,8 +190,11 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
                 )
                 
                 api = new spotifyAPI(response.data.access_token);
-                const meRes = await api.fetcher.get<SpotifyMeAPIResponse>("/me");
+                const meRes = await api.fetcher.get<SpotifyMeAPIResponse>("/me").catch((e) => ({data: undefined}));
+
                 me = meRes.data;
+                if (!me) return { props: {loginData: { message: "no premium "}} } // 無料会員
+                
                 setCookie({ res }, "user", JSON.stringify(response.data), {
                     httpOnly: true, 
                     path: "/"

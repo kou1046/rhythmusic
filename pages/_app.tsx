@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app'
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { Box } from '@mui/system';
 import { Typography } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
 
 export default function App({ Component, pageProps }: AppProps) {
 
@@ -15,8 +16,12 @@ export default function App({ Component, pageProps }: AppProps) {
                                     fontSize: 24
                                     }}>
       <Typography variant={"h5"} sx={{fontWeight: "bold", fontSize: 20}}>RHYTHMUSIC</Typography>
-      <Link href={"https://github.com/kou1046/walk-music"}><GitHubIcon /></Link>
-    </Box>     
+      <Link href={"https://github.com/kou1046/walk-music"}>
+        <IconButton>
+          <GitHubIcon />
+        </IconButton>
+      </Link>
+    </Box>
     <Component {...pageProps} />
   </>
 }
