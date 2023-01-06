@@ -30,7 +30,7 @@ import LogoutButton from "../lib/components/auth/LogoutButton";
 export default function App ({ loginData }: PageProps) {
 
     const [ artists, setArtists ] = useState<Array<SpotifyArtistAPIResponse>>([]);
-    const [ artistTracks, setArtistTracks ] = useState<Array<Array<TrackWithFeature>>>([]);
+    const [ artistTracks, setArtistTracks ] = useState<Array<Array<TrackWithFeature>>>([]); //リクエスト量が一番大きい．apiを叩くタイミングはアーティスト選択画面を終了したとき
     const [ deviceID, setDeviceID ] = useState<string>();
     const playerRef = useRef<Spotify.Player>();
     const { analyser, requestPermission: microphoneRequest } = useMicrophone();
@@ -39,7 +39,7 @@ export default function App ({ loginData }: PageProps) {
     const accsChartRef = useRef<Chart<"line">>(null);
     const { bpms, setBpms, setChart, measureBpm } = useMeasurementBpmWithChart();
 
-    const renderTrackCards = () => {
+    const renderTrackCards = useCallback(() => {
         if (!artistTracks.length) return <Typography sx={{color: "lightgray"}}>Please select an artist.</Typography>
         if (!bpms.length) return <Typography sx={{color: "lightgray"}}>Let's Tap the rhythm input.</Typography>
 
@@ -51,24 +51,9 @@ export default function App ({ loginData }: PageProps) {
         if (!selectedTracks.length) return <Typography sx={{color: "lightgray"}}>No song found ...</Typography>
 
         return <>
-            {selectedTracks.map((track, i) => <TrackCard key={`${track.id}-${i}`} track={track} deviceID={deviceID}></TrackCard>)}
+            {selectedTracks.map((track, i) => <TrackCard key={`${track.id}-${i}`} track={track} deviceID={deviceID} player={playerRef.current}></TrackCard>)}
         </>
-    }
-
-    useEffect(() => {
-        const fetchArtistTracks = async () => {
-            const artistRes = await axios.get<Array<SpotifyArtistAPIResponse>>
-            ("/api/artists/user-top");
-            if (!artistRes.data.length) return 
-
-            const trackRes = await axios.get<Array<Array<TrackWithFeature>>>(
-                `/api/artists/${artistRes.data.map(({ id }) => id).join(",")}/tracks`
-            )
-            setArtists(artistRes.data);
-            setArtistTracks(trackRes.data);
-        }
-        fetchArtistTracks();
-    }, [])
+    }, [bpms, artistTracks])
 
     useEffect(() => {
         setChart(accsChartRef.current || audioChartRef.current);
@@ -105,7 +90,7 @@ export default function App ({ loginData }: PageProps) {
             {renderTrackCards()}    
         </Grid>
         <Grid item xs={2}>
-            <VerticalArtistMenu artists={artists} />
+            <VerticalArtistMenu artists={artists} setArtists={setArtists} setArtistTracks={setArtistTracks}/>
         </Grid>
         <Grid container sx={{position: "sticky", bottom: "1px", justifyContent: "center"}}>
           <Grid item xs={7} sx={{textAlign: "center"}}>
@@ -196,8 +181,9 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
                 if (!me) return { props: {loginData: { message: "no premium "}} } // 無料会員
                 
                 setCookie({ res }, "user", JSON.stringify(response.data), {
-                    httpOnly: true, 
-                    path: "/"
+                    path: "/",
+                    httpOnly: true,
+                    SameSite: "Strict"
                 });
 
                 return { props: {

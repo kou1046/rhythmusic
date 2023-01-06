@@ -24,7 +24,8 @@ const authorization: NextApiHandler = async (req: NextApiRequest, res: NextApiRe
 
   setCookie({ res }, "user", JSON.stringify(response.data), {
     path: "/",
-    httpOnly: true
+    httpOnly: true,
+    SameSite: "Strict",
   })
   res.redirect(`${process.env.HOST_NAME}/app`);
 };

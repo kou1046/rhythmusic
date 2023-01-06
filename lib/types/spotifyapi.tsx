@@ -83,7 +83,7 @@ export interface SpotifyArtistAPIResponse extends SpotifySimpleArtistAPIResponse
     followers: Followers; 
     genres: Array<string>;
     images: Images;
-    pupularity: number;
+    popularity: number;
     type: string;
 }
 
