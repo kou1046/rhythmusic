@@ -1,4 +1,4 @@
-import { RefObject, memo } from "react"
+import { RefObject, memo, useRef, useCallback } from "react"
 import Chart from "chart.js/auto"
 import StreamingPlugin from 'chartjs-plugin-streaming';
 import Annotation from "chartjs-plugin-annotation";
@@ -8,14 +8,20 @@ import "chartjs-adapter-moment"
 Chart.register(StreamingPlugin, Annotation);
 
 type PropsType = {
-    analyser: AnalyserNode | null,
+    analyser: AnalyserNode
+    chartRef: RefObject<Chart<"line">>
     threshold?: number,
-    chartRef?: RefObject<Chart<"line">>
 }
 
-const AudioChart = ({ analyser, threshold = 180, chartRef}: PropsType) => {
+const AudioChart = ({ analyser, threshold = 160, chartRef }: PropsType) => {
 
-    if (!analyser) return <></>
+    const onRefresh = (chart: Chart<"line">) => {
+        const fftData = new Uint8Array(analyser.fftSize);
+        analyser.getByteTimeDomainData(fftData);
+        const max = fftData.reduce((prev, cur) => Math.max(prev, cur));
+        chart.data.datasets[0].data.push({x: Date.now(), y: max});
+        chart.data.datasets[1].data.push({x: Date.now(), y: threshold});
+    }
 
     const data = {
         datasets: [{
@@ -46,6 +52,9 @@ const AudioChart = ({ analyser, threshold = 180, chartRef}: PropsType) => {
             size: 10
         }
     }
+
+    
+
     const options: any = {
         maintainAspectRatio: false,
         plugins: {
@@ -68,15 +77,9 @@ const AudioChart = ({ analyser, threshold = 180, chartRef}: PropsType) => {
                 },
                 type: "realtime", 
                 realtime: {
-                    duration: 2000,
+                    duration: 3000,
                     refresh: 20,
-                    onRefresh: (chart : Chart<"line">) => {
-                        const fftData = new Uint8Array(analyser.fftSize);
-                        analyser.getByteTimeDomainData(fftData);
-                        const max = fftData.reduce((prev, cur) => Math.max(prev, cur));
-                        chart.data.datasets[0].data.push({x: Date.now(), y: max});
-                        chart.data.datasets[1].data.push({x: Date.now(), y: threshold});
-                    }
+                    onRefresh
                 }
             },
             y: {

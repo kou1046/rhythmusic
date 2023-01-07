@@ -1,7 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const httpProxy = require('http-proxy');
-require("dotenv").config({ path: ".env.local"});
+require("dotenv").config({ path: ".env.development"});
 
 const proxy = httpProxy.createProxyServer({
   target: {

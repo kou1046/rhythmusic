@@ -15,17 +15,18 @@ import VibrationIcon from '@mui/icons-material/Vibration';
 import MobileOffIcon from '@mui/icons-material/MobileOff';
 import Chart from "chart.js/auto"
 
+import useAcceleration from "../lib/hooks/useAcceleration";
+import useMeasurementBpm from "../lib/hooks/useMeasurementBpm";
+import useMicrophone from "../lib/hooks/useMicrophone";
 import { SpotifyArtistAPIResponse, SpotifyAuthApiResponse, SpotifyMeAPIResponse, TrackWithFeature } from "../lib/types/spotifyapi";
 import { selectTracksByBpm, spotifyAPI } from "../lib/utils";
 import VerticalArtistMenu from "../lib/components/media/VerticalArtistMenu";
 import TrackCard from "../lib/components/media/TrackCard";
 import Ballon from "../lib/components/container/Ballon";
-import useMeasurementBpmWithChart from "../lib/hooks/useMeasurementBpmWithChart";
-import useMicrophone from "../lib/hooks/useMicrophone";
 import AudioChart from "../lib/components/chart/AudioChart";
-import useAcceleration from "../lib/hooks/useAcceleration";
 import AccelerationChart from "../lib/components/chart/AccelerationChart";
 import LogoutButton from "../lib/components/auth/LogoutButton";
+import useInterval from "../lib/hooks/useInterval";
 
 export default function App ({ loginData }: PageProps) {
 
@@ -33,15 +34,16 @@ export default function App ({ loginData }: PageProps) {
     const [ artistTracks, setArtistTracks ] = useState<Array<Array<TrackWithFeature>>>([]); //リクエスト量が一番大きい．apiを叩くタイミングはアーティスト選択画面を終了したとき
     const [ deviceID, setDeviceID ] = useState<string>();
     const playerRef = useRef<Spotify.Player>();
-    const { analyser, requestPermission: microphoneRequest } = useMicrophone();
-    const { accs, requestPermission: motionRequest } = useAcceleration();
+    const { analyser, requestPermission: requestMicrophone } = useMicrophone();
+    const { accs, requestPermission: requestMotion } = useAcceleration();
+    const { bpms, setBpms, measureBpm } = useMeasurementBpm();
     const audioChartRef = useRef<Chart<"line">>(null);
     const accsChartRef = useRef<Chart<"line">>(null);
-    const { bpms, setBpms, setChart, measureBpm } = useMeasurementBpmWithChart();
+    const startOverTime = useRef<number>(0);
 
     const renderTrackCards = useCallback(() => {
         if (!artistTracks.length) return <Typography sx={{color: "lightgray"}}>Please select an artist.</Typography>
-        if (!bpms.length) return <Typography sx={{color: "lightgray"}}>Let's Tap the rhythm input.</Typography>
+        if (!bpms.length) return <Typography sx={{color: "lightgray"}}>Let&apos;s Tap the rhythm input.</Typography>
 
         const bpmsAve = bpms.reduce((prev, cur) => prev + cur) / bpms.length;
         const selectedTracks = artistTracks.map(tracks => {
@@ -55,9 +57,30 @@ export default function App ({ loginData }: PageProps) {
         </>
     }, [bpms, artistTracks])
 
-    useEffect(() => {
-        setChart(accsChartRef.current || audioChartRef.current);
-    }, [analyser, accs])
+    useInterval(() => {
+        if (!audioChartRef.current && !accsChartRef.current) return
+        
+        const chart = audioChartRef.current || accsChartRef.current as Chart<"line">;
+        const values = chart.data.datasets[0].data as Array<{x: number, y: number} | undefined>;
+        const recentValue = values[values.length - 1];
+        
+        if (!recentValue) return;
+
+        const thresholds = chart.data.datasets[1].data;
+        const recentThreshold = (thresholds[thresholds.length - 1]! as {x: number, y:number}).y;
+
+        //センサー値が閾値を超えたら時間を計測開始
+        if ( recentValue.y > recentThreshold ) {
+            startOverTime.current = Date.now();
+        }
+
+        //100ms以内に閾値を下回ったらBPM計測
+        if ((recentValue.y < recentThreshold) && (Date.now() - startOverTime.current < 100)) { 
+            measureBpm();
+            startOverTime.current = 0;
+        }
+
+    }, 20)
 
     useEffect(() => {
         if (loginData.me) {
@@ -99,9 +122,9 @@ export default function App ({ loginData }: PageProps) {
                           }}
                             color={"error"}>
                 BPM: {bpms.length ? Math.round(bpms.reduce((prev, cur) => prev + cur) / bpms.length) : null}
-             </Typography>
-              <AudioChart analyser={analyser} chartRef={audioChartRef} />
-              <AccelerationChart accs={accs} chartRef={accsChartRef} />
+              </Typography>
+              { analyser ? <AudioChart analyser={analyser} chartRef={audioChartRef}/> : null}
+              { accs ? <AccelerationChart accs={accs} chartRef={accsChartRef} /> : null}
             </Ballon>
           </Grid>
           <Grid item xs={12} sx={{textAlign: "center"}}>
@@ -109,14 +132,14 @@ export default function App ({ loginData }: PageProps) {
               <Fab  
                sx={{width: 60, height: 60}} 
                color="success"
-               onClick={motionRequest}
+               onClick={requestMotion}
                >{ accs ? <MobileOffIcon /> : <VibrationIcon /> }</Fab>
             </Zoom>
             <Zoom in={!accs}>
               <Fab 
                sx={{width: 60, height: 60, m:"0 2em"}} 
                color="error"
-               onClick={microphoneRequest}
+               onClick={requestMicrophone}
                >{ analyser ? <MicOff /> : <Mic /> }</Fab>
             </Zoom>
             <Zoom in={!analyser && !accs}>

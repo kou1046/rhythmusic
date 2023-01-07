@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react"
 
-export const useMeasurementBpm = (autoReset: boolean = true) => {
+const useMeasurementBpm = (autoReset: boolean = true) => {
 
     const [bpms, setBpms] = useState<Array<number>>([]);
     const [pushCount, setPushCount] = useState<number>(0);
@@ -31,3 +31,5 @@ export const useMeasurementBpm = (autoReset: boolean = true) => {
 
     return { bpms, setBpms, measureBpm }
 }
+
+export default useMeasurementBpm

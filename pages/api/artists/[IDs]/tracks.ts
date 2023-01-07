@@ -2,7 +2,7 @@ import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { parseCookies } from "nookies";
 import { splitArray, spotifyAPI } from "../../../../lib/utils";
 import { AudioFeature, SpotifyAlbumAPIResponse, SpotifyPluralResponse, 
-         SpotifyTrackAPIResponse, TrackWithFeature, MyTrack} from "../../../../lib/types/spotifyapi";
+         TrackWithFeature} from "../../../../lib/types/spotifyapi";
 
 const tracks: NextApiHandler<Array<Array<TrackWithFeature>>> = async (req: NextApiRequest, res: NextApiResponse) => {
 

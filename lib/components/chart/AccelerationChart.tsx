@@ -11,12 +11,10 @@ Chart.register(StreamingPlugin, Annotation);
 type PropsType = {
     chartRef?: RefObject<Chart<"line">>, 
     threshold?: number,
-    accs: Acceleration | null,
+    accs: Acceleration
 }
 
-const AccelerationChart = memo(({ accs, chartRef, threshold = 3}: PropsType) => {
-
-    if (!accs) return <></>
+const AccelerationChart = ({ accs, chartRef, threshold = 3}: PropsType) => {
 
     const data = {
         datasets: [{
@@ -69,7 +67,7 @@ const AccelerationChart = memo(({ accs, chartRef, threshold = 3}: PropsType) => 
                 },
                 type: "realtime", 
                 realtime: {
-                    duration: 2000,
+                    duration: 3000,
                     refresh: 20,
                     onRefresh: (chart : Chart<"line">) => {
                         const { x, y, z } = accs;
@@ -91,6 +89,6 @@ const AccelerationChart = memo(({ accs, chartRef, threshold = 3}: PropsType) => 
         }
     }
     return <Line data={data} options={options} ref={chartRef} />
-})
+}
 
-export default AccelerationChart
+export default memo(AccelerationChart)

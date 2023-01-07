@@ -1,6 +1,4 @@
 import { useCallback, useRef, useState } from "react"
-import { Button } from "@mui/material";
-import { AccelerationChart } from "../components/chart/AccelerationChart";
 
 export type Acceleration = {
     x: number | null, 
