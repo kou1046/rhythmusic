@@ -3,6 +3,8 @@ import { GetServerSideProps } from "next";
 
 import { parseCookies, setCookie } from "nookies";
 import axios from "axios";
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography";
 import Mic from "@mui/icons-material/Mic";
@@ -18,7 +20,7 @@ import Chart from "chart.js/auto"
 import useAcceleration from "../lib/hooks/useAcceleration";
 import useMeasurementBpm from "../lib/hooks/useMeasurementBpm";
 import useMicrophone from "../lib/hooks/useMicrophone";
-import { SpotifyArtistAPIResponse, SpotifyAuthApiResponse, SpotifyMeAPIResponse, TrackWithFeature } from "../lib/types/spotifyapi";
+import { SpotifyArtistAPIResponse, SpotifyAuthApiResponse, SpotifyMeAPIResponse, SpotifyTrackAPIResponse, TrackWithFeature } from "../lib/types/spotifyapi";
 import { selectTracksByBpm, spotifyAPI } from "../lib/utils";
 import VerticalArtistMenu from "../lib/components/media/VerticalArtistMenu";
 import TrackCard from "../lib/components/media/TrackCard";
@@ -27,11 +29,13 @@ import AudioChart from "../lib/components/chart/AudioChart";
 import AccelerationChart from "../lib/components/chart/AccelerationChart";
 import LogoutButton from "../lib/components/auth/LogoutButton";
 import useInterval from "../lib/hooks/useInterval";
+import MediaControlCard from "../lib/components/media/MediaControllCard";
 
 export default function App ({ loginData }: PageProps) {
 
     const [ artists, setArtists ] = useState<Array<SpotifyArtistAPIResponse>>([]);
     const [ artistTracks, setArtistTracks ] = useState<Array<Array<TrackWithFeature>>>([]); //リクエスト量が一番大きい．apiを叩くタイミングはアーティスト選択画面を終了したとき
+    const [ playingTrack, setPlayingTrack ] = useState<Spotify.Track>();
     const [ deviceID, setDeviceID ] = useState<string>();
     const playerRef = useRef<Spotify.Player>();
     const { analyser, requestPermission: requestMicrophone } = useMicrophone();
@@ -40,6 +44,12 @@ export default function App ({ loginData }: PageProps) {
     const audioChartRef = useRef<Chart<"line">>(null);
     const accsChartRef = useRef<Chart<"line">>(null);
     const startOverTime = useRef<number>(0);
+    const darkTheme = createTheme({
+        palette: {
+          mode: 'dark',
+        },
+      });
+
 
     const renderTrackCards = useCallback(() => {
         if (!artistTracks.length) return <Typography sx={{color: "lightgray"}}>Please select an artist.</Typography>
@@ -90,11 +100,16 @@ export default function App ({ loginData }: PageProps) {
                     getOAuthToken: async (cb) => {
                         cb(loginData.accessToken!)
                     },
-                    volume: 0.5
+                    volume: 1.
                 })
                 player.addListener("ready", ({ device_id }) => {
                     setDeviceID(device_id);
                 });
+                player.addListener('player_state_changed', ({
+                    track_window: { current_track }
+                  }) => {
+                    setPlayingTrack(current_track);
+                  });
                 player.connect();
                 playerRef.current = player;
             }
@@ -107,17 +122,20 @@ export default function App ({ loginData }: PageProps) {
     }, [])
 
     useEffect(() => {
-        const accessibleUserEmails = new Set(["iwashiro0517@yahoo.co.jp"]);
+        const accessibleUserEmails = new Set(["iwashiro0517@yahoo.co.jp", "iwashiro0517@gmail.com"]);
         if (!accessibleUserEmails.has(loginData.me?.email!)) {
             alert("Spotifyの審査が通るまで, 開発者が許可していないユーザーはこのWebサイトを利用できません. 開発者に連絡してください．");
         }
     }, [])
 
     return <>
-    <Grid container justifyContent={"center"}>
+    { playingTrack ? <ThemeProvider theme={darkTheme}><MediaControlCard track={playingTrack} playerRef={playerRef}></MediaControlCard></ThemeProvider>: null }
+    <Grid container justifyContent={"center"} sx={{mt: 1}}>
         <Grid item xs={10} sx={{height: "100vh", overflow: "auto", p: 1, pt: 0, border: "solid whitesmoke 1px", position: "relative"}}>
-            <Typography sx={{fontWeight: "bold", position: "sticky", top: 0, bgcolor: "white", zIndex: 1}}>Tracks</Typography>
-            {renderTrackCards()}    
+            <>
+              <Typography sx={{fontWeight: "bold", position: "sticky", top: 0, bgcolor: "white", zIndex: 1}}>Tracks</Typography>
+              {renderTrackCards()}    
+            </>
         </Grid>
         <Grid item xs={2}>
             <VerticalArtistMenu artists={artists} setArtists={setArtists} setArtistTracks={setArtistTracks}/>

@@ -22,6 +22,7 @@ export default function App({ Component, pageProps }: AppProps) {
         </IconButton>
       </Link>
     </Box>
-    <Component {...pageProps} />
+      <Component {...pageProps} />
+    
   </>
 }

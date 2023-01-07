@@ -1,7 +1,9 @@
+import { memo } from "react"
 import Image from "next/image"
 import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography"
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import IconButton from "@mui/material/IconButton";
 import { TrackWithFeature } from "../../types/spotifyapi"
 import axios from "axios";
@@ -12,7 +14,8 @@ type PropsType = {
     player?: Spotify.Player
 }
 
-const TrackCard = ({ track, deviceID, player }: PropsType) => {
+const TrackCard = ({ track, deviceID }: PropsType) => {
+
     return <>
         <Box sx={{display: "flex", alignItems: "center", borderBottom: "solid whitesmoke 1px", bgcolor: "whitesmoke"}}>
           <Image src={track.albumImages[0].url} alt={track.name} width={80} height={80} ></Image>
@@ -26,18 +29,13 @@ const TrackCard = ({ track, deviceID, player }: PropsType) => {
           <Box sx={{ml: "auto", mr: 1}}>
             <IconButton onClick={ async () => {
               if (!deviceID) return
-              console.log("test");
-              if (navigator.userAgent.match('iPhone|iPad|Android.+Mobile')) {
-                window.open(track.external_urls.spotify);
-                return
-              }
               await axios.post(`/api/player/play/?deviceID=${ deviceID }`, { uris: [track.uri] });
             }}>
-              <PlayCircleIcon sx={{width: 30, height: 30}}/>
+            <PlayCircleIcon sx={{width: 30, height: 30}}/>
             </IconButton>
           </Box>
         </Box>
     </>
 }
 
-export default TrackCard
+export default memo(TrackCard)

@@ -53,6 +53,27 @@ type ExternalUrls = {
     spotify: string
 }
 
+type Device = {
+    id: string, 
+    is_active: boolean, 
+    is_private_session: boolean, 
+    is_restricted: boolean, 
+    name: string, 
+    type: string, 
+    volume_percent: number,
+}
+
+export type SpotifyCurrentlyTrackAPIRespoonse = {
+    device: Device
+    repease_state: string,
+    shuffle_state: string,
+    is_playing: boolean, 
+    timestamp: string, 
+    context: null | string, 
+    progress_ms: string, 
+    item: SpotifyTrackAPIResponse
+}
+
 export type SpotifyPluralResponse<T> = {
     href: string, 
     items: Array<T>
