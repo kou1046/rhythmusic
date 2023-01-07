@@ -26,8 +26,12 @@ const TrackCard = ({ track, deviceID, player }: PropsType) => {
           <Box sx={{ml: "auto", mr: 1}}>
             <IconButton onClick={ async () => {
               if (!deviceID) return
+              console.log("test");
+              if (navigator.userAgent.match('iPhone|iPad|Android.+Mobile')) {
+                window.open(track.external_urls.spotify);
+                return
+              }
               await axios.post(`/api/player/play/?deviceID=${ deviceID }`, { uris: [track.uri] });
-              player?.resume();
             }}>
               <PlayCircleIcon sx={{width: 30, height: 30}}/>
             </IconButton>

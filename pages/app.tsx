@@ -83,7 +83,7 @@ export default function App ({ loginData }: PageProps) {
     }, 20)
 
     useEffect(() => {
-        if (loginData.me) {
+        if (loginData.me && loginData.me.product === "premium") {
             window.onSpotifyWebPlaybackSDKReady = () => {
                 const player = new Spotify.Player({
                     name: "rhythmusic", 
@@ -103,6 +103,13 @@ export default function App ({ loginData }: PageProps) {
                 scriptTag.src = 'https://sdk.scdn.co/spotify-player.js';
                 document.head!.appendChild(scriptTag);
             }
+        }
+    }, [])
+
+    useEffect(() => {
+        const accessibleUserEmails = new Set(["iwashiro0517@yahoo.co.jp"]);
+        if (!accessibleUserEmails.has(loginData.me?.email!)) {
+            alert("Spotifyの審査が通るまで, 開発者が許可していないユーザーはこのWebサイトを利用できません. 開発者に連絡してください．");
         }
     }, [])
 
@@ -199,10 +206,8 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
                 
                 api = new spotifyAPI(response.data.access_token);
                 const meRes = await api.fetcher.get<SpotifyMeAPIResponse>("/me").catch((e) => ({data: undefined}));
-
                 me = meRes.data;
-                if (!me) return { props: {loginData: { message: "no premium "}} } // 無料会員
-                
+
                 setCookie({ res }, "user", JSON.stringify(response.data), {
                     path: "/",
                     httpOnly: true,

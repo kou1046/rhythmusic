@@ -1,9 +1,12 @@
 export type SpotifyMeAPIResponse = {
+    country: string,
+    email: string, 
+    product: "premium" | "open",
     display_name: string, 
     external_urls: ExternalUrls,
     followers: Followers
     href: string, 
-    id: string, 
+    id: string,
     images: Array<string>, 
     type: string, 
     uri: string

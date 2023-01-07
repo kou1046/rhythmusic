@@ -73,6 +73,7 @@ const SearchArtistModal = ({ artists, isActiveState, setArtists, setIsActiveStat
               inputRef={inputRef}
               onKeyDown={ async (e) => {
                 if (e.key === "Enter"){
+                  if (!inputRef.current!.value) return 
                     const res = await axios.get<Array<SpotifyArtistAPIResponse>>
                     (`/api/artistSearch/?q=${inputRef.current!.value}`)
                     setResultArtists(getOmittedArtists(res.data));

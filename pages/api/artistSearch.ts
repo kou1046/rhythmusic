@@ -6,6 +6,7 @@ import { spotifyAPI } from "../../lib/utils";
 const artistSearch:NextApiHandler<Array<SpotifyArtistAPIResponse>>  = async (req: NextApiRequest, res: NextApiResponse) => {
     const { q } = req.query;
     const { user } = parseCookies(res);
+    console.log(user);
     const accessToken = JSON.parse(user).access_token;
     const api = new spotifyAPI(accessToken);
 
