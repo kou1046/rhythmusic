@@ -13,7 +13,7 @@ const LoginButton = memo(({ clientID, redirectUri }: PropsType) => {
     const login = () => {
         const scopes = ["user-read-playback-state", "app-remote-control", "user-read-email",
                   "playlist-read-private", "user-top-read", "user-read-currently-playing",
-                  'streaming', 'user-read-private', "user-modify-playback-state"
+                  'streaming', 'user-read-private', "user-modify-playback-state", "playlist-modify-public"
                  ];
         const params = new URLSearchParams();
         params.append("client_id", clientID || "");

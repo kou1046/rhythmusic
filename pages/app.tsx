@@ -4,7 +4,8 @@ import { GetServerSideProps } from "next";
 import { parseCookies, setCookie } from "nookies";
 import axios from "axios";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 import Box from "@mui/material/Box"
 import Typography from "@mui/material/Typography";
 import Mic from "@mui/icons-material/Mic";
@@ -30,6 +31,8 @@ import AccelerationChart from "../lib/components/chart/AccelerationChart";
 import LogoutButton from "../lib/components/auth/LogoutButton";
 import useInterval from "../lib/hooks/useInterval";
 import MediaControlCard from "../lib/components/media/MediaControllCard";
+import IconButton from "@mui/material/IconButton";
+import AddPlaylistModal from "../lib/components/media/AddPlaylistModal";
 
 export default function App ({ loginData }: PageProps) {
 
@@ -37,19 +40,19 @@ export default function App ({ loginData }: PageProps) {
     const [ artistTracks, setArtistTracks ] = useState<Array<Array<TrackWithFeature>>>([]); //リクエスト量が一番大きい．apiを叩くタイミングはアーティスト選択画面を終了したとき
     const [ playingTrack, setPlayingTrack ] = useState<Spotify.Track>();
     const [ deviceID, setDeviceID ] = useState<string>();
+    const [ isActivePlaylistModal, setIsActivePlaylistModal ] = useState<boolean>(false);
     const playerRef = useRef<Spotify.Player>();
-    const { analyser, requestPermission: requestMicrophone } = useMicrophone();
-    const { accs, requestPermission: requestMotion } = useAcceleration();
-    const { bpms, setBpms, measureBpm } = useMeasurementBpm();
     const audioChartRef = useRef<Chart<"line">>(null);
     const accsChartRef = useRef<Chart<"line">>(null);
     const startOverTime = useRef<number>(0);
+    const { analyser, requestPermission: requestMicrophone } = useMicrophone();
+    const { accs, requestPermission: requestMotion } = useAcceleration();
+    const { bpms, setBpms, measureBpm } = useMeasurementBpm();
     const darkTheme = createTheme({
         palette: {
           mode: 'dark',
         },
       });
-
 
     const renderTrackCards = useCallback(() => {
         if (!artistTracks.length) return <Typography sx={{color: "lightgray"}}>Please select an artist.</Typography>
@@ -61,11 +64,31 @@ export default function App ({ loginData }: PageProps) {
         }).flat()
 
         if (!selectedTracks.length) return <Typography sx={{color: "lightgray"}}>No song found ...</Typography>
-
         return <>
+            <AddPlaylistModal 
+              isActiveState={isActivePlaylistModal}
+              setIsActiveState={setIsActivePlaylistModal}
+              tracks={selectedTracks}
+              bpm={Math.floor(bpmsAve)}
+              userID={loginData.me?.id!}
+            />
+            <Box sx={{display: "flex", alignItems: "center",  position: "sticky", top: 0, bgcolor: "white", zIndex: 1}}>
+              <Typography sx={{fontWeight: "bold",}}>Tracks</Typography>
+                <Box sx={{m: "0 auto",}}></Box>
+                <IconButton onClick={() => setIsActivePlaylistModal(true)}>
+                  <PlaylistAddIcon  sx={{width: 30, height: 30}}/>
+                </IconButton>
+                <IconButton onClick={ async () => {
+                    if (!deviceID) return
+                    const uris = selectedTracks.map(({ uri }) => uri);
+                    await axios.post(`/api/player/play/?deviceID=${deviceID}`, { uris }); 
+                }}>
+                  <PlaylistPlayIcon sx={{width: 30, height: 30}}/>
+                </IconButton>
+            </Box>
             {selectedTracks.map((track, i) => <TrackCard key={`${track.id}-${i}`} track={track} deviceID={deviceID} player={playerRef.current}></TrackCard>)}
         </>
-    }, [bpms, artistTracks])
+    }, [bpms, artistTracks, isActivePlaylistModal])
 
     useInterval(() => {
         if (!audioChartRef.current && !accsChartRef.current) return
@@ -122,7 +145,7 @@ export default function App ({ loginData }: PageProps) {
     }, [])
 
     useEffect(() => {
-        const accessibleUserEmails = new Set(["iwashiro0517@yahoo.co.jp", "iwashiro0517@gmail.com"]);
+        const accessibleUserEmails = new Set(["iwashiro0517@yahoo.co.jp"]);
         if (!accessibleUserEmails.has(loginData.me?.email!)) {
             alert("Spotifyの審査が通るまで, 開発者が許可していないユーザーはこのWebサイトを利用できません. 開発者に連絡してください．");
         }
@@ -132,10 +155,7 @@ export default function App ({ loginData }: PageProps) {
     { playingTrack ? <ThemeProvider theme={darkTheme}><MediaControlCard track={playingTrack} playerRef={playerRef}></MediaControlCard></ThemeProvider>: null }
     <Grid container justifyContent={"center"} sx={{mt: 1}}>
         <Grid item xs={10} sx={{height: "100vh", overflow: "auto", p: 1, pt: 0, border: "solid whitesmoke 1px", position: "relative"}}>
-            <>
-              <Typography sx={{fontWeight: "bold", position: "sticky", top: 0, bgcolor: "white", zIndex: 1}}>Tracks</Typography>
-              {renderTrackCards()}    
-            </>
+            {renderTrackCards()}
         </Grid>
         <Grid item xs={2}>
             <VerticalArtistMenu artists={artists} setArtists={setArtists} setArtistTracks={setArtistTracks}/>

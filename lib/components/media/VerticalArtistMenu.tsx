@@ -64,6 +64,7 @@ const VerticalArtistMenu = ({ artists, setArtists, setArtistTracks }: PropsType)
                                             flexDirection: "column",
                                             alignItems: "center", 
                                             whiteSpace: "nowrap",
+                                            overflow: "hidden",
                                             borderBottom: "solid 1px lightgray",
                                             ":hover": {
                                                bgcolor: "lightgray"

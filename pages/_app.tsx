@@ -13,7 +13,8 @@ export default function App({ Component, pageProps }: AppProps) {
                                     justifyContent: "space-between",
                                     alignItems: "center",
                                     p: 1,
-                                    fontSize: 24
+                                    fontSize: 24,
+                                    bgcolor: "whitesmoke"
                                     }}>
       <Typography variant={"h5"} sx={{fontWeight: "bold", fontSize: 20}}>RHYTHMUSIC</Typography>
       <Link href={"https://github.com/kou1046/walk-music"}>

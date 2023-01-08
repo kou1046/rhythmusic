@@ -27,12 +27,15 @@ const TrackCard = ({ track, deviceID }: PropsType) => {
             </Box>
           </Box>
           <Box sx={{ml: "auto", mr: 1}}>
-            <IconButton onClick={ async () => {
-              if (!deviceID) return
-              await axios.post(`/api/player/play/?deviceID=${ deviceID }`, { uris: [track.uri] });
-            }}>
-            <PlayCircleIcon sx={{width: 30, height: 30}}/>
-            </IconButton>
+            { deviceID ? 
+              <IconButton onClick={ async () => {
+                await axios.post(`/api/player/play/?deviceID=${ deviceID }`, { uris: [track.uri] });
+              }}>
+                <PlayCircleIcon sx={{width: 30, height: 30}}/>
+              </IconButton>
+              : 
+              null 
+            }
           </Box>
         </Box>
     </>

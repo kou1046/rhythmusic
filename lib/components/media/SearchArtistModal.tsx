@@ -59,7 +59,7 @@ const SearchArtistModal = ({ artists, isActiveState, setArtists, setIsActiveStat
              bgcolor: 'background.paper',
              border: '2px solid #000',
              boxShadow: 24,
-             p: 2,
+             p: 1,
              overflow: "auto",
              }}>
         <AppBar sx={{position: "static", bgcolor: "dimgray"}}>

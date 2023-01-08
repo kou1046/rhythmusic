@@ -8,7 +8,7 @@ class MyDocument extends Document {
                 <Head>
                     <title>rhythmusic</title>
                 </Head>
-                <body>
+                <body style={{margin: 0}}>
                     <Main />
                     <NextScript />
                 </body>
