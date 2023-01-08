@@ -19,12 +19,21 @@ export const splitArray = <T>(array: Array<T>, elementLength: number): Array<Arr
     return Array.from( { length } , (_, i) => array.slice(i * elementLength, (i + 1) * elementLength))
 }
 
-export const selectTracksByBpm = (tracks: Array<TrackWithFeature>, bpm: number, interval: number = 5): Array<TrackWithFeature> => {
-    const selectedTracks = tracks.filter(track => track.tempo <= bpm + interval && track.tempo >= bpm - interval);
-    const idxesSortedBySquaredError = selectedTracks.map((track, i) => ({diff: Math.pow(bpm - track.tempo, 2), index: i}))
-                                                    .sort((a, b) => (a.diff > b.diff) ? 1 : -1)
-
-    return idxesSortedBySquaredError.map(({ index }) => selectedTracks[index])
+export const selectTracksByBpm = (tracks: Array<TrackWithFeature>,
+                                  bpm: number, 
+                                  interval: number = 5,
+                                  orderBy: "descending" | "ascending" | "small error" = "small error"
+                                  ): Array<TrackWithFeature> => {
+    let selectedTracks = tracks.filter(track => track.tempo <= bpm + interval && track.tempo >= bpm - interval);
+    
+    if (orderBy === "descending") selectedTracks = selectedTracks.sort((a, b) => b.tempo - a.tempo);
+    if (orderBy === "ascending") selectedTracks = selectedTracks.sort((a, b) => a.tempo - b.tempo);
+    if (orderBy === "small error"){
+        const indexSortedBySquaredError = selectedTracks.map((track, i) => ({diff: Math.pow(bpm - track.tempo, 2), index: i}))
+                                                        .sort((a, b) => a.diff - b.diff);
+        selectedTracks = indexSortedBySquaredError.map(({ index }) => selectedTracks[index]);
+    }
+    return selectedTracks
 }
 
 export const dft = (data: Array<number>) => {

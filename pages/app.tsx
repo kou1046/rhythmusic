@@ -6,7 +6,12 @@ import axios from "axios";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
-import Box from "@mui/material/Box"
+import Box from "@mui/material/Box";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CircleIcon from '@mui/icons-material/Circle';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Typography from "@mui/material/Typography";
 import Mic from "@mui/icons-material/Mic";
 import Fab from "@mui/material/Fab"
@@ -41,6 +46,7 @@ export default function App ({ loginData }: PageProps) {
     const [ playingTrack, setPlayingTrack ] = useState<Spotify.Track>();
     const [ deviceID, setDeviceID ] = useState<string>();
     const [ isActivePlaylistModal, setIsActivePlaylistModal ] = useState<boolean>(false);
+    const [ orderBy, setOrderBy ] = useState<"descending" | "ascending" | "small error">("small error");
     const playerRef = useRef<Spotify.Player>();
     const audioChartRef = useRef<Chart<"line">>(null);
     const accsChartRef = useRef<Chart<"line">>(null);
@@ -59,9 +65,7 @@ export default function App ({ loginData }: PageProps) {
         if (!bpms.length) return <Typography sx={{color: "lightgray"}}>Let&apos;s Tap the rhythm input.</Typography>
 
         const bpmsAve = bpms.reduce((prev, cur) => prev + cur) / bpms.length;
-        const selectedTracks = artistTracks.map(tracks => {
-            return selectTracksByBpm(tracks, bpmsAve, 5).flat()
-        }).flat()
+        const selectedTracks = selectTracksByBpm(artistTracks.flat(), bpmsAve, 5, orderBy);
 
         if (!selectedTracks.length) return <Typography sx={{color: "lightgray"}}>No song found ...</Typography>
         return <>
@@ -72,23 +76,50 @@ export default function App ({ loginData }: PageProps) {
               bpm={Math.floor(bpmsAve)}
               userID={loginData.me?.id!}
             />
-            <Box sx={{display: "flex", alignItems: "center",  position: "sticky", top: 0, bgcolor: "white", zIndex: 1}}>
+            <Box sx={{display: "flex",
+                      alignItems: "center", 
+                      justifyContent:"space-between", 
+                      position: "sticky", top: 0, 
+                      bgcolor: "white", 
+                      zIndex: 1}}>
               <Typography sx={{fontWeight: "bold",}}>Tracks</Typography>
-                <Box sx={{m: "0 auto",}}></Box>
-                <IconButton onClick={() => setIsActivePlaylistModal(true)}>
-                  <PlaylistAddIcon  sx={{width: 30, height: 30}}/>
-                </IconButton>
-                <IconButton onClick={ async () => {
-                    if (!deviceID) return
-                    const uris = selectedTracks.map(({ uri }) => uri);
-                    await axios.post(`/api/player/play/?deviceID=${deviceID}`, { uris }); 
-                }}>
-                  <PlaylistPlayIcon sx={{width: 30, height: 30}}/>
-                </IconButton>
+              <Box>
+                  <ToggleButtonGroup
+                    size="small"
+                    exclusive
+                    value={orderBy}
+                    onChange={(event,
+                               newAlignment) => {
+                                  setOrderBy(newAlignment)}
+                               }
+                    >
+                     <ToggleButton value="ascending">
+                        <ExpandLessIcon />
+                     </ToggleButton>
+                     <ToggleButton value="small error">
+                        <CircleIcon />
+                     </ToggleButton>
+                     <ToggleButton value="descending">
+                       <ExpandMoreIcon />
+                     </ToggleButton>    
+                  </ToggleButtonGroup>
+                </Box>
+                <Box>
+                  <IconButton onClick={() => setIsActivePlaylistModal(true)}>
+                    <PlaylistAddIcon  sx={{width: 30, height: 30}}/>
+                  </IconButton>
+                  <IconButton onClick={ async () => {
+                      if (!deviceID) return
+                      const uris = selectedTracks.map(({ uri }) => uri);
+                      await axios.post(`/api/player/play/?deviceID=${deviceID}`, { uris }); 
+                  }}>
+                    <PlaylistPlayIcon sx={{width: 30, height: 30}}/>
+                  </IconButton>
+                </Box>
             </Box>
             {selectedTracks.map((track, i) => <TrackCard key={`${track.id}-${i}`} track={track} deviceID={deviceID} player={playerRef.current}></TrackCard>)}
         </>
-    }, [bpms, artistTracks, isActivePlaylistModal])
+    }, [bpms, artistTracks, isActivePlaylistModal, orderBy])
 
     useInterval(() => {
         if (!audioChartRef.current && !accsChartRef.current) return
