@@ -11,7 +11,7 @@ type PropsType = {
 const LoginButton = memo(({ clientID, redirectUri }: PropsType) => {
 
     const login = () => {
-        const scopes = ["user-read-playback-state", "app-remote-control", "user-read-email",
+        const scopes = ["user-read-playback-state", "user-read-email",
                   "playlist-read-private", "user-top-read", "user-read-currently-playing",
                   'streaming', 'user-read-private', "user-modify-playback-state", "playlist-modify-public"
                  ];
