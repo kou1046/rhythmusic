@@ -20,8 +20,8 @@ const ws = (req, socket, head) => {
 
 const server = https.createServer(
   {
-    key: fs.readFileSync(`192.168.1.10-key.pem`),
-    cert: fs.readFileSync(`192.168.1.10.pem`),
+    key: fs.readFileSync(`${process.env.HOST}-key.pem`),
+    cert: fs.readFileSync(`${process.env.HOST}.pem`),
   },
   web,
 )

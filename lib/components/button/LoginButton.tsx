@@ -13,11 +13,9 @@ const LoginButton = memo(({ clientID, redirectUri }: PropsType) => {
     const scopes = [
       "user-read-playback-state",
       "user-read-email",
-      "playlist-read-private",
       "user-top-read",
       "user-read-currently-playing",
       "streaming",
-      "user-read-private",
       "user-modify-playback-state",
       "playlist-modify-public",
     ];
